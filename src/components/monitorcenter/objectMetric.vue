@@ -47,7 +47,7 @@
     </el-table>
 
     <!--    <pagination v-show="total>0" :total="total" :page.sync=".page" :limit.sync=".limit" @pagination="handleFilter" />-->
-    <el-dialog :title="textMap[objectsDialogStatus]" :visible.sync="objectsDialogFormVisible">
+    <el-dialog :title="textMap[objectsDialogStatus]" :visible.sync="objectsDialogFormVisible" :modal="false">
       <el-tabs v-model="activeTab" type="card">
         <el-tab-pane label="对象与指标关联" name="objectData" v-if="showObjectHost">
           <object-metric-create :sys-info="this.sysInfo" :metric-id="this.metricId"/>

@@ -2,7 +2,7 @@
   <div class="app-container">
     <div class="filter-container">
       <el-select v-model="sysInfo" placeholder="请选择系统平台" style="width: 240px" class="filter-item"  filterable  @change="handleFilter">
-        <el-option v-for="item in systemList" :key="item.id" :label="item.Sys_name" :value="item.id" />
+        <el-option v-for="item in systemList" :key="item.id" :label="`${item.Sys_name} (${item.Sys_abbreviation})`" :value="item.id" />
       </el-select>
       <el-button  class="filter-item" type="primary" icon="el-icon-search" @click="handleFilter()">
         搜索
@@ -10,9 +10,9 @@
       <el-button class="filter-item" style="margin-left: 10px;" type="primary" icon="el-icon-edit" @click="handleCreate">
         新增
       </el-button>
-      <el-button class="filter-item" style="margin-left: 10px;" type="primary" icon="el-icon-guide" @click="toggleTable">
-        视图切换
-      </el-button>
+<!--      <el-button class="filter-item" style="margin-left: 10px;" type="primary" icon="el-icon-guide" @click="toggleTable">-->
+<!--        视图切换-->
+<!--      </el-button>-->
       <el-button class="filter-item" style="margin-left: 10px;" type="primary" icon="el-icon-guide" @click="syncMetric">
         同步公共指标
       </el-button>
@@ -25,7 +25,7 @@
         <template v-else>自定义指标</template>
       </el-button>
     </div>
-<!--    <el-loading :fullscreen="true" lock text="正在同步公共指标，请稍候..." :visible="syncing"></el-loading>-->
+    <!--    <el-loading :fullscreen="true" lock text="正在同步公共指标，请稍候..." :visible="syncing"></el-loading>-->
     <el-table
       :key="tableKey"
       v-loading="listLoading"
@@ -35,11 +35,12 @@
       highlight-current-row
       style="width: 100%;"
       v-show="showTable"
+      @sort-change="handleSortChange"
     >
       <!--指标ID-->
-      <el-table-column label="ID" prop="id" sortable="custom" align="center" width="80" :class-name="getSortClass('id')">
-        <template slot-scope="{row}">
-          <span>{{ row.id }}</span>
+      <el-table-column label="序号"  sortable="custom" align="center" width="80">
+        <template v-slot="{ row, $index }">
+          <span>{{ $index + 1 }}</span>
         </template>
       </el-table-column>
       <!--对象层级-->
@@ -66,9 +67,9 @@
         </template>
       </el-table-column>
       <el-table-column label="采集方式" width="100px" align="center">
-          <template slot-scope="{row}">
-            <span>{{ row.collect_type.display }}</span>
-          </template>
+        <template slot-scope="{row}">
+          <span>{{ row.collect_type.display }}</span>
+        </template>
       </el-table-column>
       <el-table-column label="判断方式" width="70px" align="center">
         <template slot-scope="{row}">
@@ -76,9 +77,9 @@
         </template>
       </el-table-column>
       <el-table-column label="指标阈值" width="100px" align="center">
-          <template slot-scope="{row}">
-            <span>{{ row.Threshold + row.metric_unit }}</span>
-          </template>
+        <template slot-scope="{row}">
+          <span>{{ row.Threshold + (row.metric_unit || '') }}</span>
+        </template>
       </el-table-column>
       <!--操作-->
       <el-table-column label="操作" align="center" width="400" class-name="small-padding fixed-width">
@@ -96,7 +97,6 @@
       </el-table-column>
     </el-table>
 
-    <BubbleView v-if="showBubbleView" :systems="systems"></BubbleView>
     <el-table
       :key="tableKey"
       v-loading="listLoading"
@@ -108,12 +108,12 @@
       v-show="showBubbleView"
     >
       <!--指标ID-->
-      <el-table-column  label="ID" prop="id" sortable="custom" align="center" width="80" :class-name="getSortClass('id')">
+      <el-table-column  label="ID" prop="id"  align="center" width="80" >
         <template slot-scope="{row}">
           <span>{{ row.id }}</span>
         </template>
       </el-table-column>
-      <el-table-column label="指标名称" prop="metric_name" width="120px" align="center">
+      <el-table-column label="指标名称" sortable="custom" prop="metric_name" width="120px" align="center">
         <template slot-scope="{row}">
           <span>{{ row.metric_name }}</span>
         </template>
@@ -155,28 +155,20 @@
     </el-table>
 
 
-<!--    <pagination v-show="total>0" :total="total" :page.sync=".page" :limit.sync=".limit" @pagination="handleFilter" />-->
-<!--修改和新增指标的对话框-->
+    <!--    <pagination v-show="total>0" :total="total" :page.sync=".page" :limit.sync=".limit" @pagination="handleFilter" />-->
+    <!--修改和新增指标的对话框-->
     <el-dialog :title="textMap[dialogStatus]" :visible.sync="dialogFormVisible">
       <el-form ref="dataForm" :rules="rules" :model="temp" label-position="left" label-width="100px" style="width: 400px; margin-left:50px;">
         <el-form-item v-if="dialogStatus === 'create'" label="系统名" prop="sys_id">
-          <el-select v-model="temp.sys_id" class="filter-item" placeholder="请选择">
+          <el-select v-model="temp.sys_id" class="filter-item" placeholder="请选择"  filterable>
             <el-option v-for="item in systemList" :key="item.id" :label="item.Sys_name" :value="item.id" />
           </el-select>
-          <span style="color: red;">*</span>
-
         </el-form-item>
         <el-form-item label="监控指标ID">
-          <div style="display: flex; align-items: center;">
-          <el-input v-model="temp.metric_ID" placeholder="请输入监控指标ID"></el-input>
-            <span style="color: red;">*</span>
-          </div>
+            <el-input v-model="temp.metric_ID" placeholder="必填， 示例：系统简称-011 "></el-input>
         </el-form-item>
         <el-form-item label="指标名称">
-          <div style="display: flex; align-items: center;">
-          <el-input v-model="temp.metric_name" placeholder="请输入指标名称"></el-input>
-            <span style="color: red;">*</span>
-          </div>
+            <el-input v-model="temp.metric_name" placeholder="必填， 示例：容器运行状态检查"></el-input>
         </el-form-item>
         <el-form-item label="指标类型">
           <el-select v-model="temp.metric_type" placeholder="请选择指标类型">
@@ -187,22 +179,15 @@
               :value="item.value"
             ></el-option>
           </el-select>
-          <span style="color: red;">*</span>
         </el-form-item>
         <el-form-item label="指标描述">
-          <div style="display: flex; align-items: center;">
-          <el-input v-model="temp.metric_desc" placeholder="请输入指标描述"></el-input>
-          <span style="color: red;">*</span>
-          </div>
+            <el-input v-model="temp.metric_desc" placeholder="必填, 示例：该指标巡检容器运行状态"></el-input>
         </el-form-item>
         <el-form-item label="阈值">
-          <div style="display: flex; align-items: center;">
-          <el-input-number v-model="temp.Threshold" :min="0"></el-input-number>
-          <span style="color: red;">*</span>
-          </div>
+            <el-input v-model="temp.Threshold" placeholder="必填，示例：80或success或true"></el-input>
         </el-form-item>
         <el-form-item label="指标单位">
-          <el-input v-model="temp.metric_unit" placeholder="请输入指标单位"></el-input>
+          <el-input v-model="temp.metric_unit" placeholder="非必填，示例：%或为空"></el-input>
         </el-form-item>
         <el-form-item label="指标采集类型">
           <el-select v-model="temp.collect_type" placeholder="请选择指标采集类型">
@@ -213,7 +198,6 @@
               :value="item.value"
             ></el-option>
           </el-select>
-          <span style="color: red;">*</span>
         </el-form-item>
         <el-form-item label="触发规则">
           <el-select v-model="temp.trigger_rule" placeholder="请选择触发规则">
@@ -224,7 +208,6 @@
               :value="item.value"
             ></el-option>
           </el-select>
-          <span style="color: red;">*</span>
         </el-form-item>
       </el-form>
       <div slot="footer" class="dialog-footer">
@@ -236,7 +219,7 @@
         </el-button>
       </div>
     </el-dialog>
-<!--对监控对象目标的显示和处理页面-->
+    <!--对监控对象目标的显示和处理页面-->
     <el-dialog :title="textMap[objectDialogStatus]" :visible.sync="objectDialogFormVisible">
       <el-tabs v-model="activeTab" type="card">
         <el-tab-pane label="对象数据" name="objectData" v-if="showObjectHost">
@@ -256,7 +239,6 @@ import {
   fetchMetricsBySysId,
   fetchMetricsList, fetchRelateData, syncCommonMetrics, updatemetrics,
 } from '@/api/monitorcenter/metrics'
-import BubbleView from './BubbleView.vue'
 // import waves from '@/directive/waves'
 import HostInfo from '@/components/monitorcenter/hostMetric.vue';
 import ObjectMetric from "@/components/monitorcenter/objectMetric.vue";
@@ -267,7 +249,6 @@ export default {
   components: {
     HostInfo,
     ObjectMetric,
-    BubbleView,
   },
   // directives: { waves },
   filters: {
@@ -327,9 +308,8 @@ export default {
       },
       downloadLoading: false,
       metricsTypeOptions: [
-        { label: "系统层级", value: 0 },
+        { label: "公共指标", value: 0 },
         { label: "自定义", value: 1 },
-        { label: "模块层级", value: 2 },
       ],
       collectTypeOptions: [
         { label: "Agent", value: 0 },
@@ -347,17 +327,26 @@ export default {
     }
   },
   created() {
-    this.getList()
+    // this.getList()
+    this.fetchMetrics()
     this.getSysInfoList()
   },
   methods: {
+    handleSortChange({ column, prop, order }) {
+      if (order === 'ascending') {
+        this.list.sort((a, b) => (a[prop] > b[prop] ? 1 : -1));
+      } else if (order === 'descending') {
+        this.list.sort((a, b) => (a[prop] < b[prop] ? 1 : -1));
+      }
+      // 在这里，你可能需要调用 Vue 的 $forceUpdate 方法来强制更新视图
+      this.$forceUpdate();
+    },
     showRelateData() {
       const metricType = this.isCommonMetrics ? 0 : 1;
       const system_id = this.sysInfo
       fetchRelateData(system_id, metricType).then(response => {
         this.metricsData = response.data.data;
       });
-      console
     },
     getList() {
       this.listLoading = true
@@ -517,7 +506,9 @@ export default {
     },
     handleUpdate(row) {
       this.temp = Object.assign({}, row) // copy obj
-      console.log(this.temp)
+      this.$set(this.temp, 'metric_type', row.metric_type.value);
+      this.$set(this.temp, 'collect_type', row.collect_type.value);
+      this.$set(this.temp, 'trigger_rule', row.trigger_rule.value);
       this.dialogStatus = 'update'
       this.dialogFormVisible = true
       this.$nextTick(() => {
@@ -529,15 +520,16 @@ export default {
         if (valid) {
           const tempData = Object.assign({}, this.temp)
           console.log(tempData)
-          updatemetrics(this.temp.id, tempData).then(() => {
+          updatemetrics(this.sysInfo, this.temp.id, tempData).then(() => {
             this.dialogFormVisible = false
-            this.fetchMetrics()
-            this.$notify({
-              title: 'Success',
-              message: 'Update Successfully',
-              type: 'success',
-              duration: 2000
-            })
+            this.fetchMetrics().then(() => {
+              this.$notify({
+                title: 'Success',
+                message: 'Update Successfully',
+                type: 'success',
+                duration: 2000
+              })
+            });
           })
         }
       })
@@ -572,5 +564,15 @@ export default {
 <style>
 .table-fixed-layout {
   table-layout: fixed;
+}
+</style>
+
+<style scoped>
+.required-indicator {
+  display: inline-block;
+  margin-left: 20px;  /* 调整左边距离 */
+  font-size: 25px;  /* 调整字体大小 */
+  line-height: 1;  /* 调整行高，使得红点居中 */
+  color: red;
 }
 </style>

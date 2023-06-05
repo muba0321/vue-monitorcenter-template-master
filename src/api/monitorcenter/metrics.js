@@ -54,10 +54,10 @@ export function deletemetrcis(id) {
 }
 
 // 更新指标信息
-export function updatemetrics(id, data) {
+export function updatemetrics(sys_id, metric_id,  data) {
   return request({
-    url: `/metrics/${id}/`,
-    method: 'patch',
+    url: `/metrics/update/${sys_id}/${metric_id}/`,
+    method: 'post',
     data
   })
 }

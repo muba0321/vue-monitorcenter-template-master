@@ -1,8 +1,8 @@
 <template>
   <div class="app-container">
     <div class="filter-container">
-      <el-select v-model="listQuery.systemId" placeholder="请选择系统平台" clearable style="width: 240px" class="filter-item" filterable @change="handleFilter">
-        <el-option v-for="item in sysInfoList" :key="item.id" :label="item.Sys_name" :value="item.id" />
+      <el-select v-model="listQuery.systemId" placeholder="请选择系统平台"  style="width: 240px" class="filter-item" filterable @change="handleFilter">
+        <el-option v-for="item in sysInfoList" :key="item.id" :label="`${item.Sys_name} (${item.Sys_abbreviation})`" :value="item.id" />
       </el-select>
       <el-button  class="filter-item" type="primary" icon="el-icon-search" @click="handleFilter">
         搜索
@@ -10,9 +10,9 @@
       <el-button class="filter-item" style="margin-left: 10px;" type="primary" icon="el-icon-edit" @click="handleCreate">
         新增
       </el-button>
-      <el-button class="filter-item" style="margin-left: 10px;" type="primary" icon="el-icon-edit" @click="syncHost">
-        同步
-      </el-button>
+<!--      <el-button class="filter-item" style="margin-left: 10px;" type="primary" icon="el-icon-edit" @click="syncHost">-->
+<!--        同步-->
+<!--      </el-button>-->
       <!--      <el-button v-waves :loading="downloadLoading" class="filter-item" type="primary" icon="el-icon-download" @click="handleDownload">-->
       <!--        导出-->
       <!--      </el-button>-->
@@ -29,18 +29,11 @@
       @sort-change="sortChange"
     >
       <!--ID-->
-      <el-table-column label="ID" prop="id" sortable="custom" align="center" width="80" :class-name="getSortClass('id')"  v-if="$parent.$options.name !== 'Metric'">
-        <template slot-scope="{row}">
-          <span>{{ row.id }}</span>
+      <el-table-column label="序号"  sortable="custom" align="center" width="80">
+        <template v-slot="{ row, $index }">
+          <span>{{ $index + 1 }}</span>
         </template>
       </el-table-column>
-      <!--所属模块-->
-      <!--      <el-table-column label="模块ID" width="330px" align="center" >-->
-      <!--        <template slot-scope="{row}">-->
-      <!--          <span>{{ row.object_name }}</span>-->
-      <!--        </template>-->
-      <!--      </el-table-column>-->
-      <!--主机IP-->
       <el-table-column label="主机IP" width="230px" align="center">
         <template slot-scope="{row}">
           <span>{{ row.ip_address }}</span>
@@ -56,14 +49,14 @@
           <span>{{ row.os_disrtro }}</span>
         </template>
       </el-table-column>
-      <el-table-column label="内存大小" width="130px" align="center">
+      <el-table-column label="内存大小(GB)" width="130px" align="center">
         <template slot-scope="{row}">
-          <span>{{ row.mem_size }}</span>
+          <span>{{ (row.mem_size / 1024).toFixed(2) }}</span>
         </template>
       </el-table-column>
-      <el-table-column label="磁盘大小" width="130px" align="center">
+      <el-table-column label="磁盘大小(GB)" width="130px" align="center">
         <template slot-scope="{row}">
-          <span>{{ row.disk_size }}</span>
+          <span>{{ (row.disk_size / 1024).toFixed(2) }}</span>
         </template>
       </el-table-column>
       <el-table-column label="创建方式" width="130px" align="center">
@@ -93,31 +86,27 @@
     <el-dialog :title="textMap[dialogStatus]" :visible.sync="dialogFormVisible">
       <el-form ref="dataForm" :rules="rules" :model="temp" label-position="left" label-width="180px" style="width: 400px; margin-left:50px;">
         <el-form-item v-if="dialogStatus === 'create'" label="系统名" prop="sys_id">
-            <el-select v-model="temp.sys_id" class="filter-item" placeholder="Please select">
+            <el-select v-model="temp.sys_id" class="filter-item" placeholder="Please select"  filterable>
               <el-option v-for="item in sysInfoList" :key="item.id" :label="item.Sys_name" :value="item.id" />
             </el-select>
-          <span style="color: red;">*</span>
         </el-form-item>
         <el-form-item label="主机IP"  >
-          <div style="display: flex; align-items: center;">
-            <el-input v-model="temp.ip_address" />
-            <span style="color: red;">*</span>
-          </div>
+            <el-input v-model="temp.ip_address" placeholder="必填， 示例：10.25.26.15 " style="width: 250px;" />
         </el-form-item>
         <el-form-item label="主机名"  prop="host_name">
-          <el-input v-model="temp.host_name" />
+          <el-input v-model="temp.host_name" placeholder="非必填， 示例：SRAS_HOST_01 " style="width: 250px;"/>
         </el-form-item>
         <el-form-item label="CPU总hz"  prop="cpu_hz">
-          <el-input v-model="temp.cpu_hz" />
+          <el-input v-model="temp.cpu_hz" placeholder="非必填， 示例：25" style="width: 250px;"/>
         </el-form-item>
         <el-form-item label="内存大小"  prop="mem_size">
-          <el-input v-model="temp.mem_size" />
+          <el-input v-model="temp.mem_size" placeholder="非必填， 示例： 16,777,216"  style="width: 250px;"/>
         </el-form-item>
         <el-form-item label="硬盘大小"  prop="disk_size">
-          <el-input v-model="temp.disk_size" />
+          <el-input v-model="temp.disk_size" placeholder="非必填， 示例： 16,777,216"  style="width: 250px;"/>
         </el-form-item>
         <el-form-item label="操作系统"  prop="os_disrtro">
-          <el-input v-model="temp.os_disrtro" />
+          <el-input v-model="temp.os_disrtro" placeholder="非必填， 示例:RedHat 7.2"  style="width: 250px;"/>
         </el-form-item>
 
       </el-form>
@@ -180,7 +169,8 @@ export default {
         importance: undefined,
         title: undefined,
         type: undefined,
-        sort: '+id'
+        sort: '+id',
+        systemId: 1
       },
       importanceOptions: ['新交易监管系统', '业务管理系统平台', '互联网交易平台'],
       sortOptions: [{ label: 'ID Ascending', key: '+id' }, { label: 'ID Descending', key: '-id' }],
@@ -219,7 +209,8 @@ export default {
     }
   },
   async created() {
-    this.getList()
+    // this.getList()
+    this.fetchHosts(),
     this.getSysInfoList()
   },
   methods: {

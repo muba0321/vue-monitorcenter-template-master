@@ -90,7 +90,7 @@ export const constantRoutes = [
       {
         path: 'metric',
         name: 'Metric',
-        component: () => import('@/views/monitorcenter/metric/metric'),
+        component: () => import('@/views/monitorcenter/metric/metric.vue'),
         meta: { title: '监控指标', icon: 'tree' }
       },
       {

@@ -59,7 +59,7 @@ import {fetchHostsBySysId} from "@/api/monitorcenter/hosts";
 import {get_hostbymetric_sys, sys_metric_host_create, sys_metric_object_create} from "@/api/monitorcenter/metrics"; // waves directive
 
 export default {
-  name: 'ObjectMetric',
+  name: 'ObjectMetricCreate',
   directives: { waves },
   props: {
     sysInfo: {

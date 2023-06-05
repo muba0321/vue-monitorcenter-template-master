@@ -1,8 +1,8 @@
 <template>
   <div class="app-container">
     <div class="filter-container">
-      <el-select v-model="sysInfo" placeholder="请选择系统平台" clearable style="width: 240px" class="filter-item" filterable @change="handleFilter">
-        <el-option v-for="item in systemList" :key="item.id" :label="item.Sys_name" :value="item.id" />
+      <el-select v-model="sysInfo" placeholder="请选择系统平台"  style="width: 240px" class="filter-item" filterable @change="handleFilter">
+        <el-option v-for="item in systemList" :key="item.id" :label="`${item.Sys_name} (${item.Sys_abbreviation})`" :value="item.id" />
       </el-select>
       <el-button  class="filter-item" type="primary" icon="el-icon-search" @click="handleFilter()">
         搜索
@@ -10,9 +10,9 @@
       <el-button class="filter-item" style="margin-left: 10px;" type="primary" icon="el-icon-edit" @click="handleCreate">
         新增
       </el-button>
-      <el-button class="filter-item" style="margin-left: 10px;" type="primary" icon="el-icon-edit" @click="syncObject">
-        同步
-      </el-button>
+<!--      <el-button class="filter-item" style="margin-left: 10px;" type="primary" icon="el-icon-edit" @click="syncObject">-->
+<!--        同步-->
+<!--      </el-button>-->
     </div>
 
     <el-table
@@ -24,9 +24,9 @@
       style="width: 100%;"
     >
       <!--对象层级-->
-      <el-table-column label="ID" prop="id" sortable="custom" align="center" width="80" :class-name="getSortClass('id')" v-if="$parent.$options.name !== 'Metric'">
-        <template slot-scope="{row}">
-          <span>{{ row.id }}</span>
+      <el-table-column label="序号"  sortable="custom" align="center" width="80">
+        <template v-slot="{ row, $index }">
+          <span>{{ $index + 1 }}</span>
         </template>
       </el-table-column>
       <el-table-column label="对象层级" width="220px" align="center">
@@ -79,10 +79,9 @@
     <el-dialog :title="textMap[dialogStatus]" :visible.sync="dialogFormVisible">
       <el-form ref="dataForm" :rules="rules" :model="temp" label-position="left" label-width="100px" style="width: 400px; margin-left:50px;">
         <el-form-item v-if="dialogStatus === 'create'" label="系统名" prop="sys_id">
-          <el-select v-model="temp.system_id" class="filter-item" placeholder="请选择">
+          <el-select v-model="temp.system_id" class="filter-item" placeholder="请选择"  filterable>
             <el-option v-for="item in systemList" :key="item.id" :label="item.Sys_name" :value="item.id" />
           </el-select>
-          <span style="color: red;">*</span>
         </el-form-item>
         <el-form-item label="对象类型" prop="object_type">
           <el-select v-model="temp.object_type" placeholder="请选择指标类型">
@@ -93,16 +92,12 @@
               :value="item.value"
             ></el-option>
           </el-select>
-          <span style="color: red;">*</span>
         </el-form-item>
         <el-form-item label="对象名称" prop="object_name">
-          <div style="display: flex; align-items: center;">
-            <el-input v-model="temp.object_name" />
-            <span style="color: red;">*</span>
-          </div>
+            <el-input v-model="temp.object_name"  placeholder="必填， 示例：thanos_cmdb "/>
         </el-form-item>
         <el-form-item label="对象描述" prop="object_name">
-          <el-input v-model="temp.object_desc" />
+          <el-input v-model="temp.object_desc" placeholder="非必填， 示例：Thnaos的cmdb服务"/>
         </el-form-item>
         <el-form-item label="信创服务" prop="object_type">
           <el-select v-model="temp.is_xc" placeholder="请选择指标类型">
@@ -149,7 +144,7 @@ export default {
       tableKey: 0,
       list: null,
       systemList: [],
-      sysInfo: null,
+      sysInfo: 1,
       showDialog: false,
       showCreateTime: {
         type: Boolean,
@@ -190,13 +185,10 @@ export default {
     }
   },
   created() {
-    this.getList(),
+    this.fetchObjects(),
     this.getSysInfoList()
   },
   methods: {
-    requiredLabel(label) {
-      return `<span style="color: red;">*</span> ${label}`;
-    },
     getList() {
       this.listLoading = true
       fetchObjectList().then(response => {
@@ -291,8 +283,10 @@ export default {
     },
     handleUpdate(row) {
       this.temp = Object.assign({}, row) // copy obj
-      console.log(this.temp)
-      this.dialogStatus = 'update'
+      this.$set(this.temp, 'object_type', row.object_type.value);
+      console.log(row.is_xc);
+      this.$set(this.temp, 'is_xc', row.is_xc);
+      this.dialogStatus = 'update';
       this.dialogFormVisible = true
       this.$nextTick(() => {
         this.$refs['dataForm'].clearValidate()

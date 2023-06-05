@@ -44,7 +44,7 @@
 
     <pagination v-show="total>0" :total="total" :page.sync="listQuery.page" :limit.sync="listQuery.limit" @pagination="handleFilter" />
 
-    <el-dialog :title="textMap[hostsDialogStatus]" :visible.sync="hostsDialogFormVisible">
+    <el-dialog :title="textMap[hostsDialogStatus]" :visible.sync="hostsDialogFormVisible" :modal="false">
       <el-tabs v-model="activeTab" type="card">
         <el-tab-pane label="主机与指标关系" name="objectData" v-if="showObjectHost">
           <host-metric-create :sys-info="this.sysInfo" :metric-id="this.metricId"/>
